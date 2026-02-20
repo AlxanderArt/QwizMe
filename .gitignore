@@ -48,3 +48,4 @@ backend/app/uploads/*
 # Local env overrides
 *.local
 .env.local
+.vercel
