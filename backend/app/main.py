@@ -105,6 +105,15 @@ def root():
     return {"message": "Welcome to Qwiz Me API", "docs": "/docs"}
 
 
-@app.get("/api/v1/health")
+# Health as a router so it's mounted under /api/v1 like all other endpoints
+from fastapi import APIRouter  # noqa: E402
+
+_health_router = APIRouter(tags=["health"])
+
+
+@_health_router.get("/health")
 def health():
     return {"status": "healthy"}
+
+
+app.include_router(_health_router, prefix="/api/v1")
