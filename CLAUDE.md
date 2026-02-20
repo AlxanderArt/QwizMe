@@ -14,8 +14,8 @@ AI-powered quiz web application.
 cd backend
 source venv/bin/activate
 python run.py
-# Runs on http://localhost:8000
-# Swagger docs at http://localhost:8000/docs
+# Runs on http://localhost:8001
+# Swagger docs at http://localhost:8001/docs
 ```
 
 ### Frontend
@@ -29,6 +29,6 @@ npm run dev
 All endpoints under `/api/v1`. Auth via Bearer JWT token.
 
 ## Tech Stack
-- **Backend:** FastAPI, SQLAlchemy, SQLite, python-jose (JWT), passlib (bcrypt)
+- **Backend:** FastAPI, SQLAlchemy, SQLite, python-jose (JWT), bcrypt
 - **Frontend:** React, TypeScript, Vite, TailwindCSS, Axios, React Router, lucide-react
 - **AI:** Mock AI service (swappable for OpenAI later)

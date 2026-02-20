@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
+from app.routes import auth, quizzes, ai_generate, stats
 
 
 @asynccontextmanager
@@ -21,6 +22,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(quizzes.router, prefix="/api/v1")
+app.include_router(ai_generate.router, prefix="/api/v1")
+app.include_router(stats.router, prefix="/api/v1")
 
 
 @app.get("/")
