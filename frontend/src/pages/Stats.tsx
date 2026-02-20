@@ -38,7 +38,7 @@ export default function Stats() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Stats</h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
             <BookOpen className="w-4 h-4" />
@@ -73,12 +73,12 @@ export default function Stats() {
       {stats.recent_attempts.length > 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Performance</h2>
-          <div className="flex items-end gap-1 md:gap-2 h-36 md:h-40 overflow-x-auto">
+          <div className="flex items-end gap-1 md:gap-2 h-36 md:h-40 overflow-x-auto pb-2">
             {stats.recent_attempts
               .slice()
               .reverse()
               .map((attempt) => (
-                <div key={attempt.id} className="flex-1 min-w-[40px] flex flex-col items-center gap-1">
+                <div key={attempt.id} className="flex-1 min-w-[28px] md:min-w-[40px] flex flex-col items-center gap-1">
                   <span className="text-xs font-medium text-gray-600">{Math.round(attempt.percentage)}%</span>
                   <div className="w-full bg-gray-100 rounded-t-md relative" style={{ height: '100px' }}>
                     <div

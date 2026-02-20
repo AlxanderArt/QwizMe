@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../lib/api';
 import type { Quiz, QuizListResponse, StatsResponse } from '../lib/types';
 import QuizCard from '../components/QuizCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { PlusCircle, ImageUp, Trophy, Target, BookOpen, TrendingUp, AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [stats, setStats] = useState<StatsResponse | null>(null);
@@ -19,6 +22,7 @@ export default function Dashboard() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -51,13 +55,20 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this quiz? This cannot be undone.')) return;
+  const handleDeleteRequest = (id: number) => {
+    setConfirmDeleteId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (confirmDeleteId === null) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     setDeletingId(id);
     setError('');
     try {
       await api.delete(`/quizzes/${id}`);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      toast('Quiz deleted successfully');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to delete quiz');
     } finally {
@@ -66,6 +77,8 @@ export default function Dashboard() {
   };
 
   if (loading) return <LoadingSpinner message="Loading dashboard..." />;
+
+  const deleteQuizTitle = quizzes.find((q) => q.id === confirmDeleteId)?.title || 'this quiz';
 
   return (
     <div>
@@ -88,7 +101,7 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard icon={BookOpen} label="Quizzes Created" value={stats.total_quizzes_created} color="indigo" />
           <StatCard icon={Target} label="Quizzes Taken" value={stats.total_quizzes_taken} color="blue" />
           <StatCard icon={TrendingUp} label="Avg Score" value={`${stats.average_score}%`} color="green" />
@@ -123,7 +136,7 @@ export default function Dashboard() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {quizzes.map((quiz) => (
-              <QuizCard key={quiz.id} quiz={quiz} onDelete={handleDelete} deleting={deletingId === quiz.id} />
+              <QuizCard key={quiz.id} quiz={quiz} onDelete={handleDeleteRequest} deleting={deletingId === quiz.id} />
             ))}
           </div>
           {hasMore && (
@@ -144,6 +157,15 @@ export default function Dashboard() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete Quiz"
+        message={`Are you sure you want to delete "${deleteQuizTitle}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

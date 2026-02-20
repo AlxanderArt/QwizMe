@@ -127,6 +127,7 @@ export default function Login() {
           <button
             type="button"
             onClick={switchMode}
+            aria-label={mode === 'email' ? 'Switch to name login' : 'Switch to email login'}
             className="flex items-center justify-center gap-2 w-full py-3 min-h-[44px] bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
           >
             <UserCircle className="w-4 h-4" />

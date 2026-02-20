@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_handler import decode_token
@@ -30,7 +31,13 @@ def get_current_user(
     except (ValueError, TypeError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+    except OperationalError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable, please retry",
+        )
     if user is None:
         raise credentials_exception
 

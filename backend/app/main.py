@@ -105,6 +105,6 @@ def root():
     return {"message": "Welcome to Qwiz Me API", "docs": "/docs"}
 
 
-@app.get("/health")
+@app.get("/api/v1/health")
 def health():
     return {"status": "healthy"}

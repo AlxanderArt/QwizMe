@@ -1,23 +1,45 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import type { AttemptResponse, QuizDetail } from '../lib/types';
 import ScoreDisplay from '../components/ScoreDisplay';
 import { ArrowLeft, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 
+interface ResultState {
+  attempt: AttemptResponse;
+  quiz: QuizDetail;
+  selectedAnswers?: number[];
+}
+
 export default function QuizResults() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { attempt, quiz } = (location.state as { attempt: AttemptResponse; quiz: QuizDetail }) || {};
+  const { id } = useParams<{ id: string }>();
+  const [resultState, setResultState] = useState<ResultState | null>(null);
 
   useEffect(() => {
-    if (!attempt || !quiz) {
-      navigate('/dashboard', { replace: true });
+    const fromNav = location.state as ResultState | undefined;
+    if (fromNav?.attempt && fromNav?.quiz) {
+      setResultState(fromNav);
+      return;
     }
-  }, [attempt, quiz, navigate]);
 
-  if (!attempt || !quiz) {
-    return null;
-  }
+    const stored = sessionStorage.getItem(`quiz-result-${id}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as ResultState;
+        if (parsed.attempt && parsed.quiz) {
+          setResultState(parsed);
+          return;
+        }
+      } catch {}
+    }
+
+    navigate('/dashboard', { replace: true });
+  }, [location.state, id, navigate]);
+
+  if (!resultState) return null;
+
+  const { attempt, quiz, selectedAnswers } = resultState;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -34,6 +56,8 @@ export default function QuizResults() {
         <h2 className="text-lg font-semibold text-gray-900">Answer Review</h2>
 
         {quiz.questions.map((question, qIndex) => {
+          const userAnswer = selectedAnswers?.[qIndex] ?? -1;
+
           return (
             <div key={question.id} className="bg-white rounded-xl border border-gray-200 p-4 md:p-5">
               <div className="flex items-start gap-2 mb-3">
@@ -42,23 +66,36 @@ export default function QuizResults() {
               </div>
 
               <div className="space-y-2 ml-3 md:ml-7">
-                {question.answers.map((answer) => {
+                {question.answers.map((answer, aIndex) => {
                   const isCorrect = answer.is_correct;
+                  const isUserPick = aIndex === userAnswer;
+                  const isWrongPick = isUserPick && !isCorrect;
+
+                  let style = 'text-gray-600';
+                  if (isCorrect) {
+                    style = 'bg-green-50 text-green-800 border border-green-200';
+                  } else if (isWrongPick) {
+                    style = 'bg-red-50 text-red-800 border border-red-200';
+                  }
+
                   return (
                     <div
                       key={answer.id}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-                        isCorrect
-                          ? 'bg-green-50 text-green-800 border border-green-200'
-                          : 'text-gray-600'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${style}`}
                     >
                       {isCorrect ? (
                         <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                      ) : isWrongPick ? (
+                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                       ) : (
                         <XCircle className="w-4 h-4 text-gray-300 shrink-0" />
                       )}
-                      {answer.answer_text}
+                      <span className="flex-1">{answer.answer_text}</span>
+                      {isUserPick && (
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          Your answer
+                        </span>
+                      )}
                     </div>
                   );
                 })}

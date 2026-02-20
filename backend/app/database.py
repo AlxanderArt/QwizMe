@@ -11,6 +11,7 @@ if db_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    connect_args["connect_timeout"] = 10
 
 pool_kwargs = {}
 if db_url.startswith("sqlite"):

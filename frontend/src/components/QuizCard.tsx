@@ -12,7 +12,7 @@ export default function QuizCard({ quiz, onDelete, deleting }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow ${deleting ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`bg-white rounded-xl border border-gray-200 p-4 md:p-5 hover:shadow-md transition-shadow ${deleting ? 'opacity-50 pointer-events-none' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           {quiz.source_type === 'ai_generated' ? (
@@ -45,6 +45,7 @@ export default function QuizCard({ quiz, onDelete, deleting }: Props) {
 
       <button
         onClick={() => navigate(`/quiz/${quiz.id}`)}
+        aria-label={`Take quiz: ${quiz.title}`}
         className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
       >
         <Play className="w-4 h-4" />

@@ -90,7 +90,9 @@ export default function TakeQuiz() {
         answers: selectedAnswers,
       });
       setSubmitted(true);
-      navigate(`/quiz/${id}/results`, { state: { attempt: res.data, quiz } });
+      const resultState = { attempt: res.data, quiz, selectedAnswers };
+      sessionStorage.setItem(`quiz-result-${id}`, JSON.stringify(resultState));
+      navigate(`/quiz/${id}/results`, { state: resultState });
     } catch (err: any) {
       if (err.response?.status === 404) {
         setError('This quiz has been deleted');
@@ -195,7 +197,7 @@ export default function TakeQuiz() {
         </button>
 
         {/* Question dots */}
-        <div className="flex gap-1 flex-wrap justify-center" role="tablist" aria-label="Question navigation">
+        <div className="flex gap-1 flex-nowrap overflow-x-auto justify-center scrollbar-hide" role="tablist" aria-label="Question navigation">
           {quiz.questions.map((_, i) => (
             <button
               key={i}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { useToast } from '../context/ToastContext';
 import type { QuestionCreate } from '../lib/types';
 import QuestionForm from '../components/QuestionForm';
 import ErrorMessage from '../components/ErrorMessage';
@@ -23,6 +24,7 @@ export default function CreateQuiz() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleQuestionChange = (index: number, question: QuestionCreate) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? question : q)));
@@ -71,6 +73,7 @@ export default function CreateQuiz() {
         answers: q.answers.filter((a) => a.answer_text.trim()),
       }));
       await api.post('/quizzes', { title, questions: cleanedQuestions });
+      toast('Quiz created successfully');
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create quiz');
