@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.auth.dependencies import get_current_user
 from app.database import get_db
+from app.limiter import limiter
 from app.models.answer import Answer
 from app.models.question import Question
 from app.models.quiz import Quiz
@@ -16,7 +17,9 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
 
 @router.post("", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/hour")
 def create_quiz(
+    request: Request,
     data: QuizCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -72,6 +75,7 @@ def list_quizzes(
     total = db.query(func.count(Quiz.id)).filter(Quiz.user_id == current_user.id).scalar() or 0
     quizzes = (
         db.query(Quiz)
+        .options(selectinload(Quiz.questions))
         .filter(Quiz.user_id == current_user.id)
         .order_by(Quiz.created_at.desc())
         .offset(skip)
@@ -112,7 +116,9 @@ def get_quiz(
 
 
 @router.delete("/{quiz_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("100/hour")
 def delete_quiz(
+    request: Request,
     quiz_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -125,7 +131,9 @@ def delete_quiz(
 
 
 @router.post("/{quiz_id}/submit", response_model=AttemptResponse)
+@limiter.limit("60/hour")
 def submit_quiz(
+    request: Request,
     quiz_id: int,
     data: AttemptSubmit,
     db: Session = Depends(get_db),

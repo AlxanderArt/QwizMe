@@ -14,6 +14,12 @@ class UserLogin(BaseModel):
     password: str
 
 
+class NameLogin(BaseModel):
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    password: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"

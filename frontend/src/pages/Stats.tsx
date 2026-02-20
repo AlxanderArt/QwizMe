@@ -79,7 +79,7 @@ export default function Stats() {
               .reverse()
               .map((attempt) => (
                 <div key={attempt.id} className="flex-1 min-w-[40px] flex flex-col items-center gap-1">
-                  <span className="text-[10px] md:text-xs font-medium text-gray-600">{Math.round(attempt.percentage)}%</span>
+                  <span className="text-xs font-medium text-gray-600">{Math.round(attempt.percentage)}%</span>
                   <div className="w-full bg-gray-100 rounded-t-md relative" style={{ height: '100px' }}>
                     <div
                       className={`absolute bottom-0 w-full rounded-t-md transition-all duration-500 ${

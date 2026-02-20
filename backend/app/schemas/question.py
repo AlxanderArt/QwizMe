@@ -1,14 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AnswerCreate(BaseModel):
-    answer_text: str
+    answer_text: str = Field(min_length=1, max_length=500)
     is_correct: bool
 
 
 class QuestionCreate(BaseModel):
-    question_text: str
-    explanation: str | None = None
+    question_text: str = Field(min_length=1, max_length=2000)
+    explanation: str | None = Field(None, max_length=2000)
     answers: list[AnswerCreate]
 
 

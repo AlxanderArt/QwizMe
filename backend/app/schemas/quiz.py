@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.question import AnswerResponse, QuestionCreate, QuestionResponse
 
 
 class QuizCreate(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=255)
     questions: list[QuestionCreate]
 
 

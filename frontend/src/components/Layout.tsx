@@ -89,19 +89,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div className="flex justify-around items-center h-16">
-          {navItems.slice(0, 4).map((item) => {
+          {navItems.map((item) => {
             const active = location.pathname === item.to;
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 aria-label={item.label}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[48px] px-2 py-1 rounded-lg ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[48px] px-1 py-1 rounded-lg ${
                   active ? 'text-indigo-600' : 'text-gray-400'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[11px] font-medium">{item.label}</span>
               </Link>
             );
           })}

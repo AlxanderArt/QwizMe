@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 
@@ -9,7 +9,7 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     if "sub" in to_encode:
         to_encode["sub"] = str(to_encode["sub"])
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -23,7 +23,7 @@ def decode_token(token: str) -> dict | None:
 
 
 def create_purpose_token(user_id: int, purpose: str, expires_hours: int = 1) -> str:
-    expire = datetime.utcnow() + timedelta(hours=expires_hours)
+    expire = datetime.now(timezone.utc) + timedelta(hours=expires_hours)
     return jwt.encode(
         {"sub": str(user_id), "purpose": purpose, "exp": expire},
         settings.SECRET_KEY,

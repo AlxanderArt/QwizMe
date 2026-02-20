@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { BrainCircuit, LogIn, Loader2 } from 'lucide-react';
+import { BrainCircuit, LogIn, Loader2, UserCircle } from 'lucide-react';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function Login() {
+  const [mode, setMode] = useState<'email' | 'name'>('email');
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithName } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,13 +21,22 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      if (mode === 'email') {
+        await login(email, password);
+      } else {
+        await loginWithName(firstName, lastName, password);
+      }
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }
+  };
+
+  const switchMode = () => {
+    setError('');
+    setMode(mode === 'email' ? 'name' : 'email');
   };
 
   return (
@@ -41,20 +53,51 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           {error && <ErrorMessage message={error} />}
 
-          <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              inputMode="email"
-              className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="you@example.com"
-            />
-          </div>
+          {mode === 'email' ? (
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                inputMode="email"
+                className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="you@example.com"
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="login-first" className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+                <input
+                  id="login-first"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  autoComplete="given-name"
+                  className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="First name"
+                />
+              </div>
+              <div>
+                <label htmlFor="login-last" className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+                <input
+                  id="login-last"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  autoComplete="family-name"
+                  className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Last name"
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
@@ -77,6 +120,15 @@ export default function Login() {
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
             {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+
+          <button
+            type="button"
+            onClick={switchMode}
+            className="flex items-center justify-center gap-2 w-full py-3 min-h-[44px] bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+          >
+            <UserCircle className="w-4 h-4" />
+            {mode === 'email' ? 'Sign in with name instead' : 'Sign in with email instead'}
           </button>
 
           <div className="text-center text-sm text-gray-500 space-y-2">

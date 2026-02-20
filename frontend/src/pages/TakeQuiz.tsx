@@ -14,6 +14,7 @@ export default function TakeQuiz() {
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -65,6 +66,16 @@ export default function TakeQuiz() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [quiz, currentIndex]);
 
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (selectedAnswers.some(a => a !== -1) && !submitted) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [selectedAnswers, submitted]);
+
   const handleSubmit = async () => {
     if (!quiz || submitting) return;
     if (selectedAnswers.includes(-1)) {
@@ -78,6 +89,7 @@ export default function TakeQuiz() {
       const res = await api.post<AttemptResponse>(`/quizzes/${id}/submit`, {
         answers: selectedAnswers,
       });
+      setSubmitted(true);
       navigate(`/quiz/${id}/results`, { state: { attempt: res.data, quiz } });
     } catch (err: any) {
       if (err.response?.status === 404) {

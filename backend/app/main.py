@@ -78,8 +78,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",")],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # --- Rate limiter ---
@@ -103,3 +103,8 @@ app.include_router(settings_router.router, prefix="/api/v1")
 @app.get("/")
 def root():
     return {"message": "Welcome to Qwiz Me API", "docs": "/docs"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}

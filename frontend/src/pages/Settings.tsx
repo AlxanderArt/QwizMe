@@ -39,6 +39,7 @@ export default function Settings() {
 
       const res = await api.put('/settings', body);
       setSettings(res.data);
+      setProvider(res.data.ai_provider || '');
       setApiKey('');
       setSuccess('Settings saved');
       setTimeout(() => setSuccess(''), 3000);

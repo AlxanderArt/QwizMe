@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
@@ -9,13 +10,19 @@ db_url = settings.DATABASE_URL
 if db_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 elif db_url.startswith("postgresql://"):
-    # Use psycopg v3 dialect instead of legacy psycopg2
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+pool_kwargs = {}
+if db_url.startswith("sqlite"):
+    pass
+else:
+    pool_kwargs["poolclass"] = NullPool
 
 engine = create_engine(
     db_url,
     connect_args=connect_args,
     pool_pre_ping=True,
+    **pool_kwargs,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

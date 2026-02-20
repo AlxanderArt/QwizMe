@@ -8,7 +8,7 @@ class Question(Base):
     __tablename__ = "questions"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), index=True)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id", ondelete="CASCADE"), index=True)
     question_text: Mapped[str] = mapped_column(Text)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     correct_answer_index: Mapped[int] = mapped_column()

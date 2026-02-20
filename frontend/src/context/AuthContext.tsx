@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithName: (firstName: string, lastName: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -56,6 +57,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userRes.data);
   };
 
+  const loginWithName = async (firstName: string, lastName: string, password: string) => {
+    const res = await api.post('/auth/login-name', {
+      first_name: firstName,
+      last_name: lastName,
+      password,
+    });
+    const newToken = res.data.access_token;
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+
+    const userRes = await api.get('/auth/me', {
+      headers: { Authorization: `Bearer ${newToken}` },
+    });
+    setUser(userRes.data);
+  };
+
   const register = async (email: string, username: string, password: string) => {
     const res = await api.post('/auth/register', { email, username, password });
     const newToken = res.data.access_token;
@@ -75,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithName, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
