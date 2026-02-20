@@ -24,7 +24,7 @@ export default function Login() {
       if (mode === 'email') {
         await login(email, password);
       } else {
-        await loginWithName(firstName, lastName, password);
+        await loginWithName(firstName, lastName);
       }
       navigate('/dashboard');
     } catch (err: any) {
@@ -99,19 +99,21 @@ export default function Login() {
             </div>
           )}
 
-          <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Enter your password"
-            />
-          </div>
+          {mode === 'email' && (
+            <div>
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Enter your password"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
@@ -132,11 +134,13 @@ export default function Login() {
           </button>
 
           <div className="text-center text-sm text-gray-500 space-y-2">
-            <p>
-              <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                Forgot password?
-              </Link>
-            </p>
+            {mode === 'email' && (
+              <p>
+                <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                  Forgot password?
+                </Link>
+              </p>
+            )}
             <p>
               Don't have an account?{' '}
               <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">

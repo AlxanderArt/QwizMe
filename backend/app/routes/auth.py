@@ -75,8 +75,8 @@ def login_with_name(request: Request, data: NameLogin, db: Session = Depends(get
         func.lower(User.first_name) == data.first_name.strip().lower(),
         func.lower(User.last_name) == data.last_name.strip().lower(),
     ).first()
-    if not user or not verify_password(data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid name or password")
+    if not user:
+        raise HTTPException(status_code=401, detail="No account found with that name")
 
     token = create_access_token({"sub": user.id})
     return Token(access_token=token)
