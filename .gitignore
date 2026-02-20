@@ -41,3 +41,10 @@ frontend/dist/
 # Uploads (keep dir, ignore files)
 backend/app/uploads/*
 !backend/app/uploads/.gitkeep
+
+# Vercel
+.vercel/
+
+# Local env overrides
+*.local
+.env.local

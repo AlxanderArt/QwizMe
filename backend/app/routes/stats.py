@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.auth.dependencies import get_current_user
 from app.database import get_db
@@ -39,15 +39,21 @@ def get_stats(
         avg_score = 0.0
         best_score = 0.0
 
-    recent = attempts[:10]
+    recent = (
+        db.query(QuizAttempt)
+        .options(joinedload(QuizAttempt.quiz))
+        .filter(QuizAttempt.user_id == current_user.id)
+        .order_by(QuizAttempt.completed_at.desc())
+        .limit(10)
+        .all()
+    )
     recent_responses = []
     for a in recent:
-        quiz = db.query(Quiz).filter(Quiz.id == a.quiz_id).first()
         recent_responses.append(
             AttemptResponse(
                 id=a.id,
                 quiz_id=a.quiz_id,
-                quiz_title=quiz.title if quiz else "Deleted Quiz",
+                quiz_title=a.quiz.title if a.quiz else "Deleted Quiz",
                 score=a.score,
                 total_questions=a.total_questions,
                 percentage=round(a.score / a.total_questions * 100, 1) if a.total_questions > 0 else 0,

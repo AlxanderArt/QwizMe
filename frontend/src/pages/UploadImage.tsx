@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import type { UserSettings } from '../lib/types';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { ImageUp, Upload, X } from 'lucide-react';
+import { ImageUp, Upload, X, Info } from 'lucide-react';
 
 export default function UploadImage() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,8 +12,13 @@ export default function UploadImage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [aiSettings, setAiSettings] = useState<UserSettings | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/settings').then((res) => setAiSettings(res.data)).catch(() => {});
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     if (!f.type.startsWith('image/')) {
@@ -94,11 +100,11 @@ export default function UploadImage() {
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`bg-white rounded-xl border-2 border-dashed p-12 text-center cursor-pointer transition-colors ${
+          className={`bg-white rounded-xl border-2 border-dashed p-6 md:p-10 lg:p-12 text-center cursor-pointer transition-colors ${
             dragOver ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <ImageUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <ImageUp className="w-10 h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Upload an image</h2>
           <p className="text-sm text-gray-500 mb-4">
             Drag and drop an image here, or click to browse
@@ -122,7 +128,7 @@ export default function UploadImage() {
             />
             <button
               onClick={clearFile}
-              className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 cursor-pointer"
+              className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 cursor-pointer"
             >
               <X className="w-4 h-4 text-gray-600" />
             </button>
@@ -141,11 +147,26 @@ export default function UploadImage() {
         </div>
       )}
 
-      <div className="mt-6 bg-blue-50 rounded-xl p-4">
-        <p className="text-sm text-blue-700">
-          <span className="font-semibold">How it works:</span> Upload any image (textbook page, diagram, notes) and our AI will generate a quiz based on the content. Currently using mock AI for demonstration.
-        </p>
-      </div>
+      {aiSettings && !aiSettings.has_api_key && (
+        <div className="mt-6 flex items-start gap-3 bg-blue-50 rounded-xl p-4">
+          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-700">
+            Using mock AI for demonstration.{' '}
+            <Link to="/settings" className="font-semibold underline hover:text-blue-800">
+              Add your API key
+            </Link>{' '}
+            in Settings to generate real AI quizzes from your images.
+          </p>
+        </div>
+      )}
+
+      {aiSettings && aiSettings.has_api_key && (
+        <div className="mt-6 bg-green-50 rounded-xl p-4">
+          <p className="text-sm text-green-700">
+            <span className="font-semibold">AI Connected:</span> Using {aiSettings.ai_provider === 'claude' ? 'Claude' : 'OpenAI'} to analyze your images and generate quizzes.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

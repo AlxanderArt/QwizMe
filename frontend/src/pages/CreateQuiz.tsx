@@ -4,7 +4,7 @@ import api from '../lib/api';
 import type { QuestionCreate } from '../lib/types';
 import QuestionForm from '../components/QuestionForm';
 import ErrorMessage from '../components/ErrorMessage';
-import { Plus, Save } from 'lucide-react';
+import { Plus, Save, Loader2 } from 'lucide-react';
 
 const emptyQuestion = (): QuestionCreate => ({
   question_text: '',
@@ -33,11 +33,13 @@ export default function CreateQuiz() {
   };
 
   const addQuestion = () => {
+    if (questions.length >= 50) return;
     setQuestions((prev) => [...prev, emptyQuestion()]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     if (!title.trim()) {
@@ -78,20 +80,22 @@ export default function CreateQuiz() {
   };
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Quiz</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <ErrorMessage message={error} />}
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Quiz Title</label>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-5">
+          <label htmlFor="quiz-title" className="block text-sm font-medium text-gray-700 mb-1">Quiz Title</label>
           <input
+            id="quiz-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Biology Chapter 5 Review"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            maxLength={200}
+            className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
 
@@ -106,21 +110,21 @@ export default function CreateQuiz() {
           />
         ))}
 
-        <button
+        {questions.length < 50 && <button
           type="button"
           onClick={addQuestion}
-          className="flex items-center gap-2 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm font-medium justify-center cursor-pointer"
+          className="flex items-center gap-2 w-full py-3 min-h-[44px] border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-sm font-medium justify-center cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Add Question
-        </button>
+        </button>}
 
         <button
           type="submit"
           disabled={loading}
           className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors cursor-pointer"
         >
-          <Save className="w-4 h-4" />
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {loading ? 'Creating...' : 'Create Quiz'}
         </button>
       </form>

@@ -2,6 +2,7 @@ export interface User {
   id: number;
   email: string;
   username: string;
+  is_verified: boolean;
   created_at: string;
 }
 
@@ -29,6 +30,12 @@ export interface Quiz {
   source_type: 'manual' | 'ai_generated';
   question_count: number;
   created_at: string;
+}
+
+export interface QuizListResponse {
+  quizzes: Quiz[];
+  total: number;
+  has_more: boolean;
 }
 
 export interface QuizDetail {
@@ -72,4 +79,15 @@ export interface QuestionCreate {
 export interface QuizCreate {
   title: string;
   questions: QuestionCreate[];
+}
+
+export interface UserSettings {
+  ai_provider: string | null;
+  has_api_key: boolean;
+  is_verified: boolean;
+}
+
+export interface UserSettingsUpdate {
+  ai_provider?: string | null;
+  ai_api_key?: string | null;
 }

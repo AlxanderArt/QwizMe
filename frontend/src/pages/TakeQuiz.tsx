@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../lib/api';
 import type { QuizDetail, AttemptResponse } from '../lib/types';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Loader2 } from 'lucide-react';
 
 export default function TakeQuiz() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +23,13 @@ export default function TakeQuiz() {
         setQuiz(res.data);
         setSelectedAnswers(new Array(res.data.questions.length).fill(-1));
       })
-      .catch(() => setError('Quiz not found'))
+      .catch((err) => {
+        setError(
+          err.response?.status === 404
+            ? 'Quiz not found'
+            : err.response?.data?.detail || 'Failed to load quiz'
+        );
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -35,8 +41,32 @@ export default function TakeQuiz() {
     });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!quiz) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault();
+        setCurrentIndex((i) => i - 1);
+      } else if (e.key === 'ArrowRight' && currentIndex < quiz.questions.length - 1) {
+        e.preventDefault();
+        setCurrentIndex((i) => i + 1);
+      } else {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= quiz.questions[currentIndex]?.answers.length) {
+          e.preventDefault();
+          handleSelect(num - 1);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [quiz, currentIndex]);
+
   const handleSubmit = async () => {
-    if (!quiz) return;
+    if (!quiz || submitting) return;
     if (selectedAnswers.includes(-1)) {
       setError('Please answer all questions before submitting');
       return;
@@ -50,15 +80,39 @@ export default function TakeQuiz() {
       });
       navigate(`/quiz/${id}/results`, { state: { attempt: res.data, quiz } });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to submit');
+      if (err.response?.status === 404) {
+        setError('This quiz has been deleted');
+      } else {
+        setError(err.response?.data?.detail || 'Failed to submit');
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) return <LoadingSpinner message="Loading quiz..." />;
-  if (error && !quiz) return <ErrorMessage message={error} />;
-  if (!quiz) return null;
+
+  if (error && !quiz) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <ErrorMessage message={error} />
+        <Link to="/dashboard" className="inline-block mt-4 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          Back to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  if (!quiz || quiz.questions.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <ErrorMessage message="This quiz has no questions" />
+        <Link to="/dashboard" className="inline-block mt-4 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          Back to Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   const question = quiz.questions[currentIndex];
   const answered = selectedAnswers.filter((a) => a !== -1).length;
@@ -68,14 +122,14 @@ export default function TakeQuiz() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">{quiz.title}</h1>
+        <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-1 break-words">{quiz.title}</h1>
         <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
           <span>
             Question {currentIndex + 1} of {total}
           </span>
           <span>{answered} answered</span>
         </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow={answered} aria-valuemax={total}>
           <div
             className="h-full bg-indigo-600 rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
@@ -89,17 +143,18 @@ export default function TakeQuiz() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">{question.question_text}</h2>
+      <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 lg:p-6 mb-6">
+        <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6 break-words">{question.question_text}</h2>
 
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {question.answers.map((answer, aIndex) => {
             const selected = selectedAnswers[currentIndex] === aIndex;
             return (
               <button
                 key={answer.id}
                 onClick={() => handleSelect(aIndex)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all text-sm cursor-pointer ${
+                aria-pressed={selected}
+                className={`w-full text-left px-3 py-3 min-h-[44px] rounded-lg border-2 transition-all text-sm cursor-pointer break-words focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                   selected
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
                     : 'border-gray-200 hover:border-gray-300 text-gray-700'
@@ -116,48 +171,59 @@ export default function TakeQuiz() {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <button
           onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
           disabled={currentIndex === 0}
-          className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          aria-label="Previous question"
+          className="flex items-center gap-1 px-3 md:px-4 py-2.5 min-h-[44px] text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-          Previous
+          <span className="hidden sm:inline">Previous</span>
         </button>
 
         {/* Question dots */}
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 flex-wrap justify-center" role="tablist" aria-label="Question navigation">
           {quiz.questions.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentIndex(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors cursor-pointer ${
+              aria-label={`Question ${i + 1}${selectedAnswers[i] !== -1 ? ' (answered)' : ''}`}
+              aria-selected={i === currentIndex}
+              role="tab"
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] p-1 cursor-pointer"
+            >
+              <span className={`block w-6 h-6 rounded-full transition-colors ${
                 i === currentIndex
-                  ? 'bg-indigo-600'
+                  ? 'bg-indigo-600 ring-2 ring-indigo-300'
                   : selectedAnswers[i] !== -1
                   ? 'bg-indigo-300'
                   : 'bg-gray-300'
-              }`}
-            />
+              }`} />
+            </button>
           ))}
         </div>
 
         {currentIndex < total - 1 ? (
           <button
             onClick={() => setCurrentIndex((i) => Math.min(total - 1, i + 1))}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
+            aria-label="Next question"
+            className="flex items-center gap-1 px-3 md:px-4 py-2.5 min-h-[44px] text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         ) : (
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1 px-3 md:px-4 py-2.5 min-h-[44px] text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
           >
-            <Send className="w-4 h-4" />
+            {submitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
             {submitting ? 'Submitting...' : 'Submit'}
           </button>
         )}

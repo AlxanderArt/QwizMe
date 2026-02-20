@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.auth.dependencies import get_current_user
@@ -9,7 +10,7 @@ from app.models.quiz import Quiz
 from app.models.quiz_attempt import QuizAttempt
 from app.models.user import User
 from app.schemas.attempt import AttemptResponse, AttemptSubmit
-from app.schemas.quiz import QuizCreate, QuizDetail, QuizResponse
+from app.schemas.quiz import QuizCreate, QuizDetail, QuizListResponse, QuizResponse
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
@@ -61,27 +62,36 @@ def create_quiz(
     )
 
 
-@router.get("", response_model=list[QuizResponse])
+@router.get("", response_model=QuizListResponse)
 def list_quizzes(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    total = db.query(func.count(Quiz.id)).filter(Quiz.user_id == current_user.id).scalar() or 0
     quizzes = (
         db.query(Quiz)
         .filter(Quiz.user_id == current_user.id)
         .order_by(Quiz.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
-    return [
-        QuizResponse(
-            id=q.id,
-            title=q.title,
-            source_type=q.source_type,
-            question_count=len(q.questions),
-            created_at=q.created_at,
-        )
-        for q in quizzes
-    ]
+    return QuizListResponse(
+        quizzes=[
+            QuizResponse(
+                id=q.id,
+                title=q.title,
+                source_type=q.source_type,
+                question_count=len(q.questions),
+                created_at=q.created_at,
+            )
+            for q in quizzes
+        ],
+        total=total,
+        has_more=skip + limit < total,
+    )
 
 
 @router.get("/{quiz_id}", response_model=QuizDetail)

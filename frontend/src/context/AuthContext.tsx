@@ -19,18 +19,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      api
-        .get('/auth/me')
-        .then((res) => setUser(res.data))
-        .catch(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    api
+      .get('/auth/me', { signal: controller.signal })
+      .then((res) => {
+        if (!controller.signal.aborted) setUser(res.data);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
           localStorage.removeItem('token');
           setToken(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
   }, [token]);
 
   const login = async (email: string, password: string) => {

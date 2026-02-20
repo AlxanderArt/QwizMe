@@ -1,17 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import type { Quiz } from '../lib/types';
-import { Play, Trash2, BrainCircuit, PenLine } from 'lucide-react';
+import { Play, Trash2, BrainCircuit, PenLine, Loader2 } from 'lucide-react';
 
 interface Props {
   quiz: Quiz;
   onDelete: (id: number) => void;
+  deleting?: boolean;
 }
 
-export default function QuizCard({ quiz, onDelete }: Props) {
+export default function QuizCard({ quiz, onDelete, deleting }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+    <div className={`bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow ${deleting ? 'opacity-50 pointer-events-none' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           {quiz.source_type === 'ai_generated' ? (
@@ -25,10 +26,15 @@ export default function QuizCard({ quiz, onDelete }: Props) {
         </div>
         <button
           onClick={() => onDelete(quiz.id)}
-          className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-          aria-label="Delete quiz"
+          disabled={deleting}
+          className="p-2 -m-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer rounded-lg hover:bg-red-50"
+          aria-label={`Delete ${quiz.title}`}
         >
-          <Trash2 className="w-4 h-4" />
+          {deleting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
         </button>
       </div>
 
@@ -39,7 +45,7 @@ export default function QuizCard({ quiz, onDelete }: Props) {
 
       <button
         onClick={() => navigate(`/quiz/${quiz.id}`)}
-        className="flex items-center justify-center gap-2 w-full py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+        className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
       >
         <Play className="w-4 h-4" />
         Take Quiz

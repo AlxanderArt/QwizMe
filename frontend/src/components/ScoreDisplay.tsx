@@ -16,8 +16,8 @@ export default function ScoreDisplay({ score, total, percentage }: Props) {
   const offset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className={`flex flex-col items-center p-8 rounded-2xl ${colors.bg}`}>
-      <div className="relative w-32 h-32 mb-4">
+    <div className={`flex flex-col items-center p-5 md:p-8 rounded-2xl ${colors.bg}`}>
+      <div className="relative w-28 h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 mb-4">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
           <circle
             cx="60"

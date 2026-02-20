@@ -29,3 +29,9 @@ class QuizDetail(BaseModel):
     questions: list[QuestionResponse]
 
     model_config = {"from_attributes": True}
+
+
+class QuizListResponse(BaseModel):
+    quizzes: list[QuizResponse]
+    total: int
+    has_more: bool

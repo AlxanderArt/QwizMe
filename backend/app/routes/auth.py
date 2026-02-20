@@ -1,18 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
-from app.auth.jwt_handler import create_access_token
+from app.auth.jwt_handler import create_access_token, create_purpose_token, decode_purpose_token
 from app.auth.passwords import hash_password, verify_password
 from app.database import get_db
+from app.limiter import limiter
 from app.models.user import User
-from app.schemas.auth import Token, UserLogin, UserRegister, UserResponse
+from app.schemas.auth import (
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    Token,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+    VerifyEmailRequest,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-def register(data: UserRegister, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def register(request: Request, data: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     if db.query(User).filter(User.username == data.username).first():
@@ -27,12 +37,23 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
+    # Send verification email if Resend is configured
+    from app.config import settings
+    if settings.RESEND_API_KEY:
+        try:
+            from app.services.email_service import send_verification_email
+            verification_token = create_purpose_token(user.id, "verify-email", expires_hours=72)
+            send_verification_email(user.email, verification_token)
+        except Exception:
+            pass  # Don't block registration if email fails
+
     token = create_access_token({"sub": user.id})
     return Token(access_token=token)
 
 
 @router.post("/login", response_model=Token)
-def login(data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -44,3 +65,52 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+def forgot_password(request: Request, data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # Always return success to not leak whether email exists
+    user = db.query(User).filter(User.email == data.email).first()
+    if user:
+        from app.config import settings
+        if settings.RESEND_API_KEY:
+            try:
+                from app.services.email_service import send_reset_email
+                reset_token = create_purpose_token(user.id, "reset-password", expires_hours=1)
+                send_reset_email(user.email, reset_token)
+            except Exception:
+                pass
+    return {"message": "If that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+def reset_password(request: Request, data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    payload = decode_purpose_token(data.token, "reset-password")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    user.password_hash = hash_password(data.new_password)
+    db.commit()
+    return {"message": "Password reset successfully"}
+
+
+@router.post("/verify-email")
+@limiter.limit("5/minute")
+def verify_email(request: Request, data: VerifyEmailRequest, db: Session = Depends(get_db)):
+    payload = decode_purpose_token(data.token, "verify-email")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    user.is_verified = True
+    db.commit()
+    return {"message": "Email verified successfully"}

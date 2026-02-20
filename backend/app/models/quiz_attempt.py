@@ -10,8 +10,8 @@ class QuizAttempt(Base):
     __tablename__ = "quiz_attempts"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), index=True)
     score: Mapped[int] = mapped_column()
     total_questions: Mapped[int] = mapped_column()
     completed_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)

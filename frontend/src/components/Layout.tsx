@@ -5,6 +5,7 @@ import {
   PlusCircle,
   ImageUp,
   BarChart3,
+  Settings,
   LogOut,
   BrainCircuit,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/create', label: 'Create Quiz', icon: PlusCircle },
   { to: '/upload', label: 'AI Generate', icon: ImageUp },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -29,7 +31,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 bg-white border-r border-gray-200 fixed h-full">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-gray-200 fixed h-full">
         <div className="p-6 border-b border-gray-100">
           <Link to="/dashboard" className="flex items-center gap-2">
             <BrainCircuit className="w-8 h-8 text-indigo-600" />
@@ -80,20 +82,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 pb-20 md:pb-0">
-        <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+      <main className="flex-1 lg:ml-64 pb-20 lg:pb-0">
+        <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">{children}</div>
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div className="flex justify-around items-center h-16">
-          {navItems.map((item) => {
+          {navItems.slice(0, 4).map((item) => {
             const active = location.pathname === item.to;
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center gap-1 px-3 py-1 ${
+                aria-label={item.label}
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[48px] px-2 py-1 rounded-lg ${
                   active ? 'text-indigo-600' : 'text-gray-400'
                 }`}
               >
@@ -102,13 +105,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
-          <button
-            onClick={handleLogout}
-            className="flex flex-col items-center gap-1 px-3 py-1 text-gray-400 cursor-pointer"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Logout</span>
-          </button>
         </div>
       </nav>
     </div>
