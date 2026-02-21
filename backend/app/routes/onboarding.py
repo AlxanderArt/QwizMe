@@ -3,6 +3,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_onboarding_user
@@ -95,7 +96,11 @@ def set_email(
     from app.services.verification import store_code
     code = store_code(db, user.id, "onboarding-email")
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Email already in use")
 
     # Send email if configured
     from app.config import settings

@@ -12,7 +12,7 @@ interface Props {
 
 export default function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', onConfirm, onCancel }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -20,7 +20,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'De
 
     if (open) {
       dialog.showModal();
-      confirmRef.current?.focus();
+      cancelRef.current?.focus();
     } else {
       dialog.close();
     }
@@ -55,13 +55,13 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'De
       </div>
       <div className="flex gap-3 px-6 pb-6">
         <button
+          ref={cancelRef}
           onClick={onCancel}
           className="flex-1 py-2.5 min-h-[44px] text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
-          ref={confirmRef}
           onClick={onConfirm}
           className="flex-1 py-2.5 min-h-[44px] text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
         >

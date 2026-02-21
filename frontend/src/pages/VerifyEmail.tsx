@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { BrainCircuit, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
+  const { refreshUser } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
@@ -20,6 +22,7 @@ export default function VerifyEmail() {
       .then(() => {
         setStatus('success');
         setMessage('Your email has been verified!');
+        refreshUser();
       })
       .catch((err) => {
         setStatus('error');

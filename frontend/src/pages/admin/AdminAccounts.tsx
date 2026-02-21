@@ -128,7 +128,9 @@ export default function AdminAccounts() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Create Account</h2>
         <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3">
+          <label htmlFor="create-first-name" className="sr-only">First name</label>
           <input
+            id="create-first-name"
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
@@ -136,7 +138,9 @@ export default function AdminAccounts() {
             placeholder="First name"
             className="flex-1 px-3 py-2.5 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
+          <label htmlFor="create-last-name" className="sr-only">Last name</label>
           <input
+            id="create-last-name"
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
