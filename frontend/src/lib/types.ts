@@ -1,9 +1,13 @@
 export interface User {
   id: number;
-  email: string;
-  username: string;
+  email: string | null;
+  username: string | null;
   is_verified: boolean;
   created_at: string;
+  role: string;
+  onboarding_step: number;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 export interface Token {
@@ -90,4 +94,19 @@ export interface UserSettings {
 export interface UserSettingsUpdate {
   ai_provider?: string | null;
   ai_api_key?: string | null;
+}
+
+export interface AdminAccount {
+  id: number;
+  first_name: string | null;
+  last_name: string | null;
+  onboarding_step: number;
+  created_at: string;
+}
+
+export interface OnboardingStatus {
+  onboarding_step: number;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
 }

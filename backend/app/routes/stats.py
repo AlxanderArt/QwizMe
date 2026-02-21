@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_active_user
 from app.database import get_db
 from app.models.quiz import Quiz
 from app.models.quiz_attempt import QuizAttempt
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 @router.get("", response_model=StatsResponse)
 def get_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     total_quizzes = db.query(func.count(Quiz.id)).filter(Quiz.user_id == current_user.id).scalar() or 0
 

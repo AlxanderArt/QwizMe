@@ -14,11 +14,6 @@ class UserLogin(BaseModel):
     password: str
 
 
-class NameLogin(BaseModel):
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-
-
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -26,10 +21,14 @@ class Token(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
-    email: str
-    username: str
+    email: str | None = None
+    username: str | None = None
     is_verified: bool
     created_at: datetime
+    role: str = "user"
+    onboarding_step: int = 5
+    first_name: str | None = None
+    last_name: str | None = None
 
     model_config = {"from_attributes": True}
 

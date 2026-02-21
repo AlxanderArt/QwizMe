@@ -46,3 +46,17 @@ def send_reset_email(email: str, token: str) -> None:
     </div>
     """
     _send(email, "Reset your Qwiz Me password", html)
+
+
+def send_verification_code_email(email: str, code: str) -> None:
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; text-align: center;">
+      <h2 style="color: #4f46e5;">Verify your email</h2>
+      <p>Enter this code to verify your email address:</p>
+      <div style="margin: 24px 0; padding: 20px; background: #f3f4f6; border-radius: 12px;">
+        <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #1f2937;">{code}</span>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">This code expires in 10 minutes.</p>
+    </div>
+    """
+    _send(email, "Your Qwiz Me verification code", html)

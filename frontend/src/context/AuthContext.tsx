@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import api from '../lib/api';
 import type { User } from '../lib/types';
 
@@ -6,9 +6,9 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  loginWithName: (firstName: string, lastName: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   loading: boolean;
 }
 
@@ -18,6 +18,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+
+  const fetchUser = useCallback(async (authToken: string, signal?: AbortSignal) => {
+    const res = await api.get('/auth/me', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      signal,
+    });
+    return res.data;
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -50,26 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newToken = res.data.access_token;
     localStorage.setItem('token', newToken);
     setToken(newToken);
-
-    const userRes = await api.get('/auth/me', {
-      headers: { Authorization: `Bearer ${newToken}` },
-    });
-    setUser(userRes.data);
-  };
-
-  const loginWithName = async (firstName: string, lastName: string) => {
-    const res = await api.post('/auth/login-name', {
-      first_name: firstName,
-      last_name: lastName,
-    });
-    const newToken = res.data.access_token;
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-
-    const userRes = await api.get('/auth/me', {
-      headers: { Authorization: `Bearer ${newToken}` },
-    });
-    setUser(userRes.data);
+    const userData = await fetchUser(newToken);
+    setUser(userData);
   };
 
   const register = async (email: string, username: string, password: string) => {
@@ -77,11 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newToken = res.data.access_token;
     localStorage.setItem('token', newToken);
     setToken(newToken);
-
-    const userRes = await api.get('/auth/me', {
-      headers: { Authorization: `Bearer ${newToken}` },
-    });
-    setUser(userRes.data);
+    const userData = await fetchUser(newToken);
+    setUser(userData);
   };
 
   const logout = () => {
@@ -90,8 +77,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) return;
+    try {
+      const userData = await fetchUser(currentToken);
+      setUser(userData);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, loginWithName, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

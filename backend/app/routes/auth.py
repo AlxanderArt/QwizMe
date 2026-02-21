@@ -12,7 +12,6 @@ from app.limiter import limiter
 from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
-    NameLogin,
     ResetPasswordRequest,
     Token,
     UserLogin,
@@ -61,22 +60,8 @@ def register(request: Request, data: UserRegister, db: Session = Depends(get_db)
 @limiter.limit("5/minute")
 def login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(func.lower(User.email) == data.email.lower()).first()
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user or not user.password_hash or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    token = create_access_token({"sub": user.id})
-    return Token(access_token=token)
-
-
-@router.post("/login-name", response_model=Token)
-@limiter.limit("5/minute")
-def login_with_name(request: Request, data: NameLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(
-        func.lower(User.first_name) == data.first_name.strip().lower(),
-        func.lower(User.last_name) == data.last_name.strip().lower(),
-    ).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="No account found with that name")
 
     token = create_access_token({"sub": user.id})
     return Token(access_token=token)

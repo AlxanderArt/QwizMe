@@ -8,20 +8,25 @@ import {
   Settings,
   LogOut,
   BrainCircuit,
+  Shield,
 } from 'lucide-react';
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/create', label: 'Create Quiz', icon: PlusCircle },
-  { to: '/upload', label: 'AI Generate', icon: ImageUp },
-  { to: '/stats', label: 'Stats', icon: BarChart3 },
-  { to: '/settings', label: 'Settings', icon: Settings },
-];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'founder';
+  const displayName = user?.username || user?.first_name || 'User';
+
+  const navItems = [
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/create', label: 'Create Quiz', icon: PlusCircle },
+    { to: '/upload', label: 'AI Generate', icon: ImageUp },
+    { to: '/stats', label: 'Stats', icon: BarChart3 },
+    { to: '/settings', label: 'Settings', icon: Settings },
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin', icon: Shield }] : []),
+  ];
 
   const handleLogout = () => {
     logout();
@@ -49,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 p-4 space-y-1" role="navigation" aria-label="Main navigation">
           {navItems.map((item) => {
-            const active = location.pathname === item.to;
+            const active = location.pathname === item.to || (item.to === '/admin' && location.pathname.startsWith('/admin'));
             return (
               <Link
                 key={item.to}
@@ -72,11 +77,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 px-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
               <span className="text-sm font-semibold text-indigo-700">
-                {user?.username?.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.username}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
           </div>
@@ -98,7 +103,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50" role="navigation" aria-label="Mobile navigation">
         <div className="flex justify-around items-center h-16">
-          {navItems.map((item) => {
+          {navItems.slice(0, 5).map((item) => {
             const active = location.pathname === item.to;
             return (
               <Link

@@ -18,10 +18,29 @@ logging.basicConfig(
 logger = logging.getLogger("qwizme")
 
 
+def _assign_founder():
+    if not settings.FOUNDER_EMAIL:
+        return
+    from app.database import SessionLocal
+    from app.models.user import User
+    from sqlalchemy import func
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(func.lower(User.email) == settings.FOUNDER_EMAIL.lower()).first()
+        if user and user.role != "founder":
+            user.role = "founder"
+            db.commit()
+            logger.info("Assigned founder role to %s", user.email)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Qwiz Me API (env=%s)", settings.ENVIRONMENT)
     init_db()
+    _assign_founder()
     yield
 
 
@@ -92,12 +111,15 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- Routers ---
 from app.routes import auth, quizzes, ai_generate, stats, settings as settings_router  # noqa: E402
+from app.routes import admin, onboarding  # noqa: E402
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(quizzes.router, prefix="/api/v1")
 app.include_router(ai_generate.router, prefix="/api/v1")
 app.include_router(stats.router, prefix="/api/v1")
 app.include_router(settings_router.router, prefix="/api/v1")
+app.include_router(admin.router, prefix="/api/v1")
+app.include_router(onboarding.router, prefix="/api/v1")
 
 
 @app.get("/")

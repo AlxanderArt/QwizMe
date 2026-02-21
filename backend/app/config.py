@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_KEY: str = ""
+    FOUNDER_EMAIL: str = ""
 
     model_config = {"env_file": ".env"}
 

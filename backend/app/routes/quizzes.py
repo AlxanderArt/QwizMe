@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_active_user
 from app.database import get_db
 from app.limiter import limiter
 from app.models.answer import Answer
@@ -22,7 +22,7 @@ def create_quiz(
     request: Request,
     data: QuizCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     quiz = Quiz(
         user_id=current_user.id,
@@ -70,7 +70,7 @@ def list_quizzes(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     total = db.query(func.count(Quiz.id)).filter(Quiz.user_id == current_user.id).scalar() or 0
     quizzes = (
@@ -102,7 +102,7 @@ def list_quizzes(
 def get_quiz(
     quiz_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     quiz = (
         db.query(Quiz)
@@ -121,7 +121,7 @@ def delete_quiz(
     request: Request,
     quiz_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     quiz = db.query(Quiz).filter(Quiz.id == quiz_id, Quiz.user_id == current_user.id).first()
     if not quiz:
@@ -137,7 +137,7 @@ def submit_quiz(
     quiz_id: int,
     data: AttemptSubmit,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     quiz = (
         db.query(Quiz)

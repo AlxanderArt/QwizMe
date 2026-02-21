@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { BrainCircuit, LogIn, Loader2 } from 'lucide-react';
+import { BrainCircuit, Search, Loader2 } from 'lucide-react';
 import ErrorMessage from '../components/ErrorMessage';
+import api from '../lib/api';
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function ClaimAccount() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,10 +17,14 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const res = await api.post('/onboarding/claim', {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      });
+      sessionStorage.setItem('onboarding_token', res.data.onboarding_token);
+      navigate('/claim-account/onboarding');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed');
+      setError(err.response?.data?.detail || 'No account found with that name');
     } finally {
       setLoading(false);
     }
@@ -35,38 +38,37 @@ export default function Login() {
             <BrainCircuit className="w-10 h-10 text-indigo-600" />
             <h1 className="text-3xl font-bold text-gray-900">Qwiz Me</h1>
           </div>
-          <p className="text-gray-500">Sign in to your account</p>
+          <p className="text-gray-500">Claim your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           {error && <ErrorMessage message={error} />}
 
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label htmlFor="claim-first" className="block text-sm font-medium text-gray-700 mb-1">First name</label>
             <input
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="claim-first"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               required
-              autoComplete="email"
-              inputMode="email"
+              autoComplete="given-name"
               className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="you@example.com"
+              placeholder="First name"
             />
           </div>
 
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label htmlFor="claim-last" className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
             <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="claim-last"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
               required
-              autoComplete="current-password"
+              autoComplete="family-name"
               className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Enter your password"
+              placeholder="Last name"
             />
           </div>
 
@@ -75,26 +77,15 @@ export default function Login() {
             disabled={loading}
             className="flex items-center justify-center gap-2 w-full py-3 min-h-[44px] bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors cursor-pointer"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {loading ? 'Searching...' : 'Find My Account'}
           </button>
 
-          <div className="text-center text-sm text-gray-500 space-y-2">
+          <div className="text-center text-sm text-gray-500">
             <p>
-              <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                Forgot password?
-              </Link>
-            </p>
-            <p>
-              Don't have an account?{' '}
-              <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                Sign up
-              </Link>
-            </p>
-            <p>
-              Were you given an account?{' '}
-              <Link to="/claim-account" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                Claim it here
+              Already have an account?{' '}
+              <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                Sign in
               </Link>
             </p>
           </div>
