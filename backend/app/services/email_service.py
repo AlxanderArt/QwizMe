@@ -48,6 +48,19 @@ def send_reset_email(email: str, token: str) -> None:
     _send(email, "Reset your Qwiz Me password", html)
 
 
+def send_email_change_verification(email: str, token: str) -> None:
+    link = f"{settings.FRONTEND_URL}/confirm-email-change?token={token}"
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #4f46e5;">Confirm your new email</h2>
+      <p>You requested to change your Qwiz Me email to this address. Click the button below to confirm.</p>
+      <a href="{link}" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Confirm Email Change</a>
+      <p style="color: #6b7280; font-size: 14px; margin-top: 24px;">This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+    </div>
+    """
+    _send(email, "Confirm your new Qwiz Me email", html)
+
+
 def send_verification_code_email(email: str, code: str) -> None:
     html = f"""
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; text-align: center;">

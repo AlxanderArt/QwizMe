@@ -8,6 +8,19 @@ export interface User {
   onboarding_step: number;
   first_name: string | null;
   last_name: string | null;
+  pending_email: string | null;
+  profile_picture_url: string | null;
+}
+
+export interface ProfileData {
+  first_name: string | null;
+  last_name: string | null;
+  username: string | null;
+  email: string | null;
+  pending_email: string | null;
+  is_verified: boolean;
+  profile_picture_url: string | null;
+  created_at: string;
 }
 
 export interface Token {

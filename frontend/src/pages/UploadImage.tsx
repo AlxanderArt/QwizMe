@@ -109,7 +109,7 @@ export default function UploadImage() {
           <p className="text-sm text-gray-500 mb-4">
             Drag and drop an image here, or click to browse
           </p>
-          <p className="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</p>
+          <p className="text-xs text-gray-400">PNG, JPG, WebP, GIF up to 10MB</p>
           <input
             ref={inputRef}
             type="file"

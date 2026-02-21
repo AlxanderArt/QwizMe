@@ -122,6 +122,15 @@ app.include_router(admin.router, prefix="/api/v1")
 app.include_router(onboarding.router, prefix="/api/v1")
 
 
+# --- Static files for local dev uploads ---
+import os  # noqa: E402
+if settings.ENVIRONMENT != "production":
+    from fastapi.staticfiles import StaticFiles  # noqa: E402
+    _uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(_uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
+
+
 @app.get("/")
 def root():
     return {"message": "Welcome to Qwiz Me API", "docs": "/docs"}

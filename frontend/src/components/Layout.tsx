@@ -75,11 +75,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 px-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-              <span className="text-sm font-semibold text-indigo-700">
-                {displayName.charAt(0).toUpperCase()}
-              </span>
-            </div>
+            {user?.profile_picture_url ? (
+              <img
+                src={user.profile_picture_url}
+                alt={displayName}
+                className="w-8 h-8 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                <span className="text-sm font-semibold text-indigo-700">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>

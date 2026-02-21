@@ -21,6 +21,7 @@ import OnboardingWizard from './pages/OnboardingWizard';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminAccounts from './pages/admin/AdminAccounts';
 import AdminUsers from './pages/admin/AdminUsers';
+import ConfirmEmailChange from './pages/ConfirmEmailChange';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/claim-account" element={<ClaimAccount />} />
             <Route path="/claim-account/onboarding" element={<OnboardingWizard />} />
+            <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
 
             {/* Protected */}
             <Route

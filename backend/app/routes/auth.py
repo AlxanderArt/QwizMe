@@ -19,6 +19,7 @@ from app.schemas.auth import (
     UserResponse,
     VerifyEmailRequest,
 )
+from app.schemas.settings import ConfirmEmailChangeRequest
 
 logger = logging.getLogger("qwizme")
 
@@ -67,9 +68,19 @@ def login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     return Token(access_token=token)
 
 
+def _profile_picture_url(user: User) -> str | None:
+    if not user.profile_picture:
+        return None
+    if user.profile_picture.startswith("http"):
+        return user.profile_picture
+    return f"/uploads/{user.profile_picture}"
+
+
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    data = UserResponse.model_validate(current_user)
+    data.profile_picture_url = _profile_picture_url(current_user)
+    return data
 
 
 @router.post("/forgot-password")
@@ -119,3 +130,35 @@ def verify_email(request: Request, data: VerifyEmailRequest, db: Session = Depen
     user.is_verified = True
     db.commit()
     return {"message": "Email verified successfully"}
+
+
+@router.post("/confirm-email-change")
+@limiter.limit("5/minute")
+def confirm_email_change(
+    request: Request,
+    data: ConfirmEmailChangeRequest,
+    db: Session = Depends(get_db),
+):
+    payload = decode_purpose_token(data.token, "change-email")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user or not user.pending_email:
+        raise HTTPException(status_code=400, detail="No pending email change")
+
+    # Race condition safety: check email not taken
+    existing = db.query(User).filter(
+        func.lower(User.email) == user.pending_email.lower(),
+        User.id != user.id,
+    ).first()
+    if existing:
+        user.pending_email = None
+        db.commit()
+        raise HTTPException(status_code=400, detail="Email already in use")
+
+    user.email = user.pending_email
+    user.pending_email = None
+    user.is_verified = True
+    db.commit()
+    return {"message": "Email updated successfully"}

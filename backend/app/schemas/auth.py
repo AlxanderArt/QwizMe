@@ -29,6 +29,8 @@ class UserResponse(BaseModel):
     onboarding_step: int = 5
     first_name: str | None = None
     last_name: str | None = None
+    pending_email: str | None = None
+    profile_picture_url: str | None = None
 
     model_config = {"from_attributes": True}
 
