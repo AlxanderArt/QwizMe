@@ -60,7 +60,36 @@ export default function AdminUsers() {
 
       {error && <ErrorMessage message={error} />}
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Mobile card view */}
+      <div className="sm:hidden space-y-3">
+        {users.map((u) => (
+          <div key={u.id} className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {u.first_name || u.username || '—'} {u.last_name || ''}
+              </p>
+              {roleBadge(u.role)}
+            </div>
+            <p className="text-xs text-gray-500 truncate">{u.email || '—'}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">{statusLabel(u.onboarding_step)}</span>
+              {u.role !== 'founder' && u.onboarding_step >= 5 && (
+                <select
+                  value={u.role}
+                  onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                  className="px-2 py-1.5 min-h-[36px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -75,10 +104,10 @@ export default function AdminUsers() {
             <tbody className="divide-y divide-gray-100">
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td className="px-6 py-3 text-gray-900 font-medium">
+                  <td className="px-6 py-3 text-gray-900 font-medium truncate max-w-[200px]">
                     {u.first_name || u.username || '—'} {u.last_name || ''}
                   </td>
-                  <td className="px-6 py-3 text-gray-500">{u.email || '—'}</td>
+                  <td className="px-6 py-3 text-gray-500 truncate max-w-[200px]">{u.email || '—'}</td>
                   <td className="px-6 py-3">{roleBadge(u.role)}</td>
                   <td className="px-6 py-3 text-gray-500">{statusLabel(u.onboarding_step)}</td>
                   <td className="px-6 py-3">
@@ -86,7 +115,7 @@ export default function AdminUsers() {
                       <select
                         value={u.role}
                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        className="px-2 py-1.5 min-h-[36px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                       >
                         <option value="user">User</option>
                         <option value="admin">Admin</option>

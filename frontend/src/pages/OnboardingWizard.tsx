@@ -20,20 +20,19 @@ function createOnboardingApi() {
 
 const steps = [
   { label: 'Welcome', icon: CheckCircle2 },
-  { label: 'Email', icon: Mail },
-  { label: 'Verify', icon: CheckCircle2 },
+  { label: 'Verify', icon: Mail },
   { label: 'Password', icon: KeyRound },
 ];
 
 function ProgressBar({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
+    <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-8 flex-wrap">
       {steps.map((step, i) => {
         const stepNum = i + 1;
         const isActive = stepNum === currentStep;
         const isComplete = stepNum < currentStep;
         return (
-          <div key={step.label} className="flex items-center gap-2">
+          <div key={step.label} className="flex items-center gap-1.5 sm:gap-2">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                 isComplete
@@ -46,7 +45,7 @@ function ProgressBar({ currentStep }: { currentStep: number }) {
               {isComplete ? <CheckCircle2 className="w-4 h-4" /> : stepNum}
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-8 h-0.5 ${isComplete ? 'bg-indigo-600' : 'bg-gray-200'}`} />
+              <div className={`w-6 sm:w-8 h-0.5 ${isComplete ? 'bg-indigo-600' : 'bg-gray-200'}`} />
             )}
           </div>
         );
@@ -63,15 +62,15 @@ export default function OnboardingWizard() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Step 2 state
+  // Step 1 state (email)
   const [email, setEmail] = useState('');
 
-  // Step 3 state
+  // Step 2 state (verify code)
   const [codeDigits, setCodeDigits] = useState(['', '', '', '', '', '']);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Step 4 state
+  // Step 3 state (password)
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -103,10 +102,11 @@ export default function OnboardingWizard() {
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
+  // Map backend onboarding_step → visual progress step
   const mapStepToVisual = (step: number) => {
-    if (step <= 1) return 1;
-    if (step === 2) return 3;
-    if (step === 3) return 4;
+    if (step <= 1) return 1;  // Welcome + Email
+    if (step === 2) return 2; // Verify code
+    if (step === 3) return 3; // Set password
     return 1;
   };
 
@@ -166,7 +166,6 @@ export default function OnboardingWizard() {
     setSubmitting(true);
     try {
       const res = await onboardingApi.current.post('/onboarding/password', { password });
-      // Got real access token — transition to regular auth
       localStorage.setItem('token', res.data.access_token);
       sessionStorage.removeItem('onboarding_token');
       window.location.href = '/dashboard';
@@ -179,7 +178,6 @@ export default function OnboardingWizard() {
 
   const handleDigitChange = (index: number, value: string) => {
     if (value.length > 1) {
-      // Handle paste
       const digits = value.replace(/\D/g, '').slice(0, 6).split('');
       const newDigits = [...codeDigits];
       digits.forEach((d, i) => {
@@ -210,7 +208,7 @@ export default function OnboardingWizard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </div>
     );
@@ -221,7 +219,7 @@ export default function OnboardingWizard() {
   const visualStep = mapStepToVisual(status.onboarding_step);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -235,7 +233,7 @@ export default function OnboardingWizard() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           {error && <div className="mb-4"><ErrorMessage message={error} /></div>}
 
-          {/* Step 1: Welcome */}
+          {/* Step 1: Welcome + Email */}
           {status.onboarding_step === 1 && (
             <div className="text-center space-y-4">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -276,13 +274,13 @@ export default function OnboardingWizard() {
             <div className="space-y-4">
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-900">Verify your email</h2>
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-gray-500 text-sm mt-1 break-all">
                   We sent a 6-digit code to <span className="font-medium text-gray-700">{status.email}</span>
                 </p>
               </div>
 
               <form onSubmit={handleVerifyCode} className="space-y-4">
-                <div className="flex justify-center gap-2">
+                <div className="flex justify-center gap-1.5 sm:gap-2">
                   {codeDigits.map((digit, i) => (
                     <input
                       key={i}
@@ -293,7 +291,7 @@ export default function OnboardingWizard() {
                       value={digit}
                       onChange={(e) => handleDigitChange(i, e.target.value)}
                       onKeyDown={(e) => handleDigitKeyDown(i, e)}
-                      className="w-11 h-13 text-center text-lg font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-10 h-12 sm:w-11 sm:h-13 text-center text-lg font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       autoFocus={i === 0}
                     />
                   ))}

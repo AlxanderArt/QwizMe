@@ -34,7 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-dvh bg-gray-50 flex">
       {/* Skip to content */}
       <a
         href="#main-content"
@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </a>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-gray-200 fixed h-full">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto">
         <div className="p-6 border-b border-gray-100">
           <Link to="/dashboard" className="flex items-center gap-2">
             <BrainCircuit className="w-8 h-8 text-indigo-600" />
@@ -75,14 +75,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 px-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
               <span className="text-sm font-semibold text-indigo-700">
                 {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
             </div>
           </div>
           <button
@@ -101,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50" role="navigation" aria-label="Mobile navigation">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-[env(safe-area-inset-bottom)]" role="navigation" aria-label="Mobile navigation">
         <div className="flex justify-around items-center h-16">
           {navItems.slice(0, 5).map((item) => {
             const active = location.pathname === item.to;

@@ -36,12 +36,14 @@ def store_code(db: Session, user_id: int, purpose: str) -> str:
 
 
 def verify_code(db: Session, user_id: int, purpose: str, plain_code: str) -> bool:
+    # Atomic: lock the row to prevent concurrent verification
     vc = (
         db.query(VerificationCode)
         .filter(
             VerificationCode.user_id == user_id,
             VerificationCode.purpose == purpose,
         )
+        .with_for_update()
         .order_by(VerificationCode.created_at.desc())
         .first()
     )
@@ -55,12 +57,12 @@ def verify_code(db: Session, user_id: int, purpose: str, plain_code: str) -> boo
         return False
 
     vc.attempts += 1
-    db.commit()
 
     if _hash_code(plain_code) != vc.code_hash:
+        db.commit()
         return False
 
-    # Code verified — clean up
+    # Code verified — delete atomically
     db.delete(vc)
     db.commit()
     return True

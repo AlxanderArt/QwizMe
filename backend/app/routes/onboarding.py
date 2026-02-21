@@ -39,7 +39,8 @@ def _generate_username(db: Session, first_name: str, last_name: str) -> str:
 @router.post("/claim")
 @limiter.limit("5/minute")
 def claim_account(request: Request, data: ClaimAccountRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(
+    # Lock row to prevent simultaneous claims
+    user = db.query(User).with_for_update().filter(
         func.lower(User.first_name) == data.first_name.strip().lower(),
         func.lower(User.last_name) == data.last_name.strip().lower(),
         User.onboarding_step == 0,
@@ -89,15 +90,18 @@ def set_email(
 
     user.email = data.email
     user.onboarding_step = 2
+
+    # Always generate code so it exists for verification
+    from app.services.verification import store_code
+    code = store_code(db, user.id, "onboarding-email")
+
     db.commit()
 
-    # Send verification code
+    # Send email if configured
     from app.config import settings
     if settings.RESEND_API_KEY:
         try:
             from app.services.email_service import send_verification_code_email
-            from app.services.verification import store_code
-            code = store_code(db, user.id, "onboarding-email")
             send_verification_code_email(data.email, code)
         except Exception as e:
             logger.warning("Failed to send verification code to user %d: %s", user.id, e)
@@ -137,12 +141,14 @@ def resend_code(
     if user.onboarding_step != 2:
         raise HTTPException(status_code=400, detail="Invalid onboarding step")
 
+    # Always generate code so it exists for verification
+    from app.services.verification import store_code
+    code = store_code(db, user.id, "onboarding-email")
+
     from app.config import settings
     if settings.RESEND_API_KEY:
         try:
             from app.services.email_service import send_verification_code_email
-            from app.services.verification import store_code
-            code = store_code(db, user.id, "onboarding-email")
             send_verification_code_email(user.email, code)
         except Exception as e:
             logger.warning("Failed to resend verification code to user %d: %s", user.id, e)

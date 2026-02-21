@@ -27,6 +27,9 @@ export default function AdminAccounts() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Delete loading
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
   const fetchAccounts = async () => {
     try {
       const res = await api.get('/admin/accounts');
@@ -95,11 +98,15 @@ export default function AdminAccounts() {
   };
 
   const handleDelete = async (id: number) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       await api.delete(`/admin/accounts/${id}`);
       setAccounts((prev) => prev.filter((a) => a.id !== id));
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to delete account');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -152,7 +159,7 @@ export default function AdminAccounts() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Bulk Upload</h2>
         <p className="text-sm text-gray-500 mb-4">Upload a CSV file with <code className="bg-gray-100 px-1 rounded">first_name,last_name</code> per line.</p>
-        <label className="flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer w-fit">
+        <label className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           {uploading ? 'Uploading...' : 'Choose CSV'}
           <input
@@ -178,26 +185,29 @@ export default function AdminAccounts() {
         ) : (
           <div className="divide-y divide-gray-100">
             {accounts.map((account) => (
-              <div key={account.id} className="flex items-center justify-between px-6 py-3">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {account.first_name} {account.last_name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(account.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
+              <div key={account.id} className="flex items-center justify-between px-4 sm:px-6 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {account.first_name} {account.last_name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(account.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0 ml-3">
                   {statusBadge(account.onboarding_step)}
                   {isFounder && (
                     <button
                       onClick={() => handleDelete(account.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                      disabled={deletingId === account.id}
+                      className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50 transition-colors cursor-pointer"
                       title="Delete account"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {deletingId === account.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </button>
                   )}
                 </div>
