@@ -7,7 +7,7 @@ from app.schemas.question import AnswerResponse, QuestionCreate, QuestionRespons
 
 class QuizCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
-    questions: list[QuestionCreate]
+    questions: list[QuestionCreate] = Field(min_length=1, max_length=50)
 
 
 class QuizResponse(BaseModel):

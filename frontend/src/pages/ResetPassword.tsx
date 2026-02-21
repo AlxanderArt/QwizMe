@@ -29,7 +29,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid link</h1>
           <p className="text-gray-500 mb-4">This reset link is missing or invalid.</p>
@@ -42,7 +42,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">

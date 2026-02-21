@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -7,7 +7,13 @@ import QuestionForm from '../components/QuestionForm';
 import ErrorMessage from '../components/ErrorMessage';
 import { Plus, Save, Loader2 } from 'lucide-react';
 
-const emptyQuestion = (): QuestionCreate => ({
+let nextKeyId = 0;
+const genKey = () => `q_${++nextKeyId}`;
+
+type KeyedQuestion = QuestionCreate & { _key: string };
+
+const emptyQuestion = (): KeyedQuestion => ({
+  _key: genKey(),
   question_text: '',
   explanation: undefined,
   answers: [
@@ -20,22 +26,36 @@ const emptyQuestion = (): QuestionCreate => ({
 
 export default function CreateQuiz() {
   const [title, setTitle] = useState('');
-  const [questions, setQuestions] = useState<QuestionCreate[]>([emptyQuestion(), emptyQuestion()]);
+  const [questions, setQuestions] = useState<KeyedQuestion[]>([emptyQuestion(), emptyQuestion()]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isDirty = useRef(false);
+
+  const markDirty = useCallback(() => { isDirty.current = true; }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const handleQuestionChange = (index: number, question: QuestionCreate) => {
-    setQuestions((prev) => prev.map((q, i) => (i === index ? question : q)));
+    markDirty();
+    setQuestions((prev) => prev.map((q, i) => (i === index ? { ...question, _key: q._key } : q)));
   };
 
   const handleRemoveQuestion = (index: number) => {
+    markDirty();
     setQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addQuestion = () => {
     if (questions.length >= 50) return;
+    markDirty();
     setQuestions((prev) => [...prev, emptyQuestion()]);
   };
 
@@ -72,7 +92,8 @@ export default function CreateQuiz() {
         ...q,
         answers: q.answers.filter((a) => a.answer_text.trim()),
       }));
-      await api.post('/quizzes', { title, questions: cleanedQuestions });
+      await api.post('/quizzes', { title, questions: cleanedQuestions.map(({ _key, ...q }) => q) });
+      isDirty.current = false;
       toast('Quiz created successfully');
       navigate('/dashboard');
     } catch (err: any) {
@@ -95,7 +116,7 @@ export default function CreateQuiz() {
             id="quiz-title"
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); markDirty(); }}
             placeholder="e.g. Biology Chapter 5 Review"
             maxLength={200}
             className="w-full px-3 py-3 min-h-[44px] border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -104,7 +125,7 @@ export default function CreateQuiz() {
 
         {questions.map((q, i) => (
           <QuestionForm
-            key={i}
+            key={q._key}
             index={i}
             question={q}
             onChange={handleQuestionChange}

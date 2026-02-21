@@ -31,15 +31,19 @@ async def generate_from_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
+    ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if not file.content_type or file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP, and GIF images are allowed")
 
     contents = await file.read()
     if len(contents) > settings.MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=400, detail="File too large (max 10MB)")
 
     media_type = file.content_type or "image/png"
-    ext = os.path.splitext(file.filename or "image.png")[1]
+    ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+    ext = os.path.splitext(file.filename or "image.png")[1].lower()
+    if ext not in ALLOWED_EXTS:
+        ext = ".png"
     filename = f"{uuid.uuid4().hex}{ext}"
 
     # Store image: Supabase in production, local in dev
