@@ -49,3 +49,6 @@ backend/app/uploads/*
 *.local
 .env.local
 .vercel
+
+# Claude Code
+CLAUDE.md
